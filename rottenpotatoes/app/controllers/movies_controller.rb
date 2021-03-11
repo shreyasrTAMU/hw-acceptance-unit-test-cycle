@@ -1,5 +1,9 @@
 class MoviesController < ApplicationController
 
+  def movie_params
+    params.require(:movie).permit(:title, :rating, :description, :release_date, :director)
+  end
+
   def show
     id = params[:id] # retrieve movie ID from URI route
     @movie = Movie.find(id) # look up movie by unique ID
@@ -7,7 +11,16 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
+    @all_ratings = Movie.all_ratings
+    @sort = params[:sort] || session[:sort]
+    @ratings = params[:ratings]  || session[:ratings] || all_ratings
+    @movies = Movie.where( { rating: @ratings.keys } ).order(@sort)
+    session[:sort], session[:ratings] = @sort, @ratings
+
+    if params[:sort] != session[:sort] or params[:ratings] != session[:ratings]
+      flash.keep
+      redirect_to movies_path sort: @sort, ratings: @ratings
+    end
   end
 
   def new
@@ -49,7 +62,11 @@ class MoviesController < ApplicationController
   private
   # Making "internal" methods private is not required, but is a common practice.
   # This helps make clear which methods respond to requests, and which ones do not.
-  def movie_params
-    params.require(:movie).permit(:title, :rating, :description, :release_date, :director)
+  
+  def all_ratings  
+    hash = {}
+    @all_ratings.each { |val| hash[val] = '1' }
+    hash
   end
+  
 end

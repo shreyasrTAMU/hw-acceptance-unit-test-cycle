@@ -1,4 +1,3 @@
-
 Given /the following movies exist/ do |movies_table|
   movies_table.hashes.each do |movie|
     Movie.create movie
@@ -11,12 +10,6 @@ Then /I should see "(.*)" before "(.*)"/ do |e1, e2|
   expect(page.body.index(e1) < page.body.index(e2))
 end
 
-Then /^the director of "(.+)" should be "(.+)"/ do |movie_name, director|
-  movie = Movie.find_by(title: movie_name)
-  visit movie_path(movie)
-  expect(page.body).to match(/Director:\s#{director}/)
-end
-
 When /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
   rating_list.split(', ').each do |rating|
     step %{I #{uncheck.nil? ? '' : 'un'}check "ratings_#{rating}"}
@@ -27,5 +20,15 @@ Then /I should see all the movies/ do
   # Make sure that all the movies in the app are visible in the table
   Movie.all.each do |movie|
     step %{I should see "#{movie.title}"}
+  end
+end
+
+Then /^the director of "([^"]*)" should be "([^""]*)"$/ do |movie_title, director_name|
+  if page.respond_to? :should
+    page.should have_content(movie_title)
+    page.should have_content(director_name)
+  else
+    assert page.has_content?(movie_title)
+    assert page.has_content?(director_name)
   end
 end
